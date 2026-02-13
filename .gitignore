@@ -1,0 +1,19 @@
+# Build artifacts
+.build/
+*.xcodeproj
+*.xcworkspace
+
+# Electron
+node_modules/
+npm-debug.log
+dist/
+
+# macOS
+.DS_Store
+CommuteTracker.app/
+
+# Config (contains API key)
+config.json
+
+# Logs
+*.log
