@@ -41,19 +41,29 @@ struct ContentView: View {
     var mainView: some View {
         VStack(spacing: 16) {
             // Status
-            HStack {
-                if locationManager.isUpdating {
-                    ProgressView()
-                        .scaleEffect(0.7)
-                }
-                Text(commuteManager.statusMessage)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                Spacer()
-                if let lastUpdate = commuteManager.lastUpdate {
-                    Text(lastUpdate, style: .time)
+            VStack(spacing: 4) {
+                HStack {
+                    if locationManager.isUpdating {
+                        ProgressView()
+                            .scaleEffect(0.7)
+                    }
+                    Text(commuteManager.statusMessage)
                         .font(.caption)
                         .foregroundColor(.secondary)
+                    Spacer()
+                    if let lastUpdate = commuteManager.lastUpdate {
+                        Text(lastUpdate, style: .time)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                // Show current location for debugging
+                if let location = locationManager.location {
+                    Text("📍 \(String(format: "%.4f, %.4f", location.coordinate.latitude, location.coordinate.longitude))")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .opacity(0.7)
                 }
             }
             .padding(.horizontal)
@@ -69,6 +79,9 @@ struct ContentView: View {
                         transitTime: commuteManager.homeTransitTime,
                         transitDistance: commuteManager.homeTransitDistance
                     )
+                    .onTapGesture {
+                        openGoogleMaps(destination: homeAddress, mode: "driving")
+                    }
 
                     CommuteCard(
                         title: "🏢 Office",
@@ -77,6 +90,9 @@ struct ContentView: View {
                         transitTime: commuteManager.officeTransitTime,
                         transitDistance: commuteManager.officeTransitDistance
                     )
+                    .onTapGesture {
+                        openGoogleMaps(destination: officeAddress, mode: "driving")
+                    }
                 }
                 .padding(.horizontal)
             }
@@ -167,6 +183,21 @@ struct ContentView: View {
             apiKey: apiKey
         )
     }
+
+    func openGoogleMaps(destination: String, mode: String) {
+        guard let location = locationManager.location else { return }
+
+        let origin = "\(location.coordinate.latitude),\(location.coordinate.longitude)"
+        let encodedOrigin = origin.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? origin
+        let encodedDestination = destination.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? destination
+
+        // Google Maps URL with directions
+        let urlString = "https://www.google.com/maps/dir/?api=1&origin=\(encodedOrigin)&destination=\(encodedDestination)&travelmode=\(mode)"
+
+        if let url = URL(string: urlString) {
+            NSWorkspace.shared.open(url)
+        }
+    }
 }
 
 struct CommuteCard: View {
@@ -178,8 +209,14 @@ struct CommuteCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title)
-                .font(.headline)
+            HStack {
+                Text(title)
+                    .font(.headline)
+                Spacer()
+                Image(systemName: "arrow.up.forward.circle.fill")
+                    .foregroundColor(.blue)
+                    .imageScale(.small)
+            }
 
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -224,5 +261,10 @@ struct CommuteCard: View {
         .padding()
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(Color.blue.opacity(0), lineWidth: 2)
+        )
+        .contentShape(Rectangle())
     }
 }

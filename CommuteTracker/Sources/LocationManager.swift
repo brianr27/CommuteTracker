@@ -49,6 +49,8 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         isUpdating = false
         if let location = locations.last {
+            print("✅ GPS Location received: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+            print("   Accuracy: \(location.horizontalAccuracy)m")
             self.location = location
         }
     }
@@ -113,7 +115,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     return
                 }
 
-                print("Location found: \(lat), \(lon)")
+                print("📍 IP Location found: \(lat), \(lon)")
                 DispatchQueue.main.async {
                     self?.location = CLLocation(latitude: lat, longitude: lon)
                     self?.isUpdating = false
