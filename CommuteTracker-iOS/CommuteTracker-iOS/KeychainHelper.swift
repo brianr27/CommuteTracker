@@ -9,7 +9,7 @@ class KeychainHelper {
     // Save data to keychain
     func save(_ data: Data, for key: String) -> Bool {
         // Delete any existing item first
-        delete(key)
+        _ = delete(key)
 
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
