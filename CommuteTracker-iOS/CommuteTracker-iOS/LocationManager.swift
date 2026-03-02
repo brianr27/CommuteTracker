@@ -8,6 +8,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var isUpdating = false
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var errorMessage: String?
+    @Published var locationSource: String = "Unknown"
 
     private var gpsTimer: DispatchWorkItem?
     private var authTimer: DispatchWorkItem?
@@ -96,6 +97,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
             print("✅ GPS Location received: \(location.coordinate.latitude), \(location.coordinate.longitude)")
             print("   Accuracy: \(location.horizontalAccuracy)m")
             self.location = location
+            self.locationSource = "GPS (\(Int(location.horizontalAccuracy))m)"
         }
     }
 
@@ -239,6 +241,7 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
                     print("✅ IP Location found: \(lat), \(lon)")
                     DispatchQueue.main.async {
                         self.location = CLLocation(latitude: lat, longitude: lon)
+                        self.locationSource = "IP (approximate)"
                         self.isUpdating = false
                         self.ipLocationRetryCount = 0 // Reset on success
                         self.errorMessage = nil

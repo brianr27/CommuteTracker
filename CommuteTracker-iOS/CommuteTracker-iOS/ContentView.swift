@@ -69,10 +69,19 @@ struct ContentView: View {
 
                 // Show current location for debugging
                 if let location = locationManager.location {
-                    Text("📍 \(String(format: "%.4f, %.4f", location.coordinate.latitude, location.coordinate.longitude))")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .opacity(0.7)
+                    HStack(spacing: 4) {
+                        Text("📍 \(String(format: "%.4f, %.4f", location.coordinate.latitude, location.coordinate.longitude))")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("•")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(locationManager.locationSource)
+                            .font(.caption2)
+                            .foregroundColor(locationManager.locationSource.starts(with: "GPS") ? .green : .orange)
+                            .bold()
+                    }
+                    .opacity(0.7)
                 }
             }
             .padding(.horizontal)
