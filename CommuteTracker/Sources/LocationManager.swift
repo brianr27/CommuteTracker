@@ -21,6 +21,20 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
         authorizationStatus = manager.authorizationStatus
+
+        // Debug: Print initial authorization status
+        print("🔍 Initial authorization status: \(authorizationStatusString(authorizationStatus))")
+    }
+
+    private func authorizationStatusString(_ status: CLAuthorizationStatus) -> String {
+        switch status {
+        case .notDetermined: return "Not Determined"
+        case .restricted: return "Restricted"
+        case .denied: return "Denied"
+        case .authorizedAlways: return "Authorized Always"
+        case .authorized: return "Authorized (deprecated)"
+        @unknown default: return "Unknown (\(status.rawValue))"
+        }
     }
 
     func requestLocation() {
@@ -30,7 +44,10 @@ class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
         isUpdating = true
         errorMessage = nil
 
-        switch manager.authorizationStatus {
+        let currentStatus = manager.authorizationStatus
+        print("🔍 Current authorization status: \(authorizationStatusString(currentStatus))")
+
+        switch currentStatus {
         case .notDetermined:
             guard !isRequestingAuthorization else {
                 print("Already requesting authorization, ignoring duplicate request")

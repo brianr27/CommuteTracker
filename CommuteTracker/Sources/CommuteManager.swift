@@ -54,6 +54,15 @@ class CommuteManager: ObservableObject {
     }
 
     private func fetchCommuteTime(origin: String, destination: String, mode: String, apiKey: String, completion: @escaping (CommuteResult?) -> Void) {
+        print("🚗 Fetching \(mode) route: \(origin) → \(destination)")
+
+        // Check if API key is provided
+        guard !apiKey.isEmpty else {
+            print("❌ No API key configured!")
+            completion(nil)
+            return
+        }
+
         var components = URLComponents(string: "https://maps.googleapis.com/maps/api/distancematrix/json")!
         components.queryItems = [
             URLQueryItem(name: "origins", value: origin),
@@ -65,18 +74,53 @@ class CommuteManager: ObservableObject {
         ]
 
         guard let url = components.url else {
+            print("❌ Failed to create URL")
             completion(nil)
             return
         }
 
         URLSession.shared.dataTask(with: url) { data, response, error in
-            guard let data = data,
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let rows = json["rows"] as? [[String: Any]],
+            if let error = error {
+                print("❌ Network error: \(error.localizedDescription)")
+                completion(nil)
+                return
+            }
+
+            guard let data = data else {
+                print("❌ No data received")
+                completion(nil)
+                return
+            }
+
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                print("❌ Failed to parse JSON")
+                completion(nil)
+                return
+            }
+
+            // Check for API errors
+            if let status = json["status"] as? String, status != "OK" {
+                print("❌ Google Maps API error: \(status)")
+                if let errorMessage = json["error_message"] as? String {
+                    print("   Error message: \(errorMessage)")
+                }
+                completion(nil)
+                return
+            }
+
+            guard let rows = json["rows"] as? [[String: Any]],
                   let elements = rows.first?["elements"] as? [[String: Any]],
-                  let element = elements.first,
-                  let status = element["status"] as? String,
-                  status == "OK" else {
+                  let element = elements.first else {
+                print("❌ Invalid response structure")
+                completion(nil)
+                return
+            }
+
+            let elementStatus = element["status"] as? String
+            print("   Element status: \(elementStatus ?? "unknown")")
+
+            guard elementStatus == "OK" else {
+                print("❌ Route not found or invalid")
                 completion(nil)
                 return
             }
@@ -84,6 +128,8 @@ class CommuteManager: ObservableObject {
             let duration = (element["duration_in_traffic"] as? [String: Any])?["text"] as? String
                 ?? (element["duration"] as? [String: Any])?["text"] as? String
             let distance = (element["distance"] as? [String: Any])?["text"] as? String
+
+            print("✅ \(mode): \(duration ?? "?") (\(distance ?? "?"))")
 
             completion(CommuteResult(duration: duration, distance: distance))
         }.resume()

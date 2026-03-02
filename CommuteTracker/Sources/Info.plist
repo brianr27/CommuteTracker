@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <key>CFBundleIdentifier</key>
+    <string>com.brianriordan.CommuteTracker</string>
+    <key>CFBundleName</key>
+    <string>CommuteTracker</string>
+    <key>CFBundleDisplayName</key>
+    <string>Commute Tracker</string>
+    <key>CFBundleVersion</key>
+    <string>1.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleExecutable</key>
+    <string>CommuteTracker</string>
     <key>NSLocationUsageDescription</key>
     <string>Commute Tracker needs your location to calculate travel times to your home and office.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
