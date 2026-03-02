@@ -4,6 +4,12 @@
 <dict>
     <key>NSLocationUsageDescription</key>
     <string>Commute Tracker needs your location to calculate travel times to your home and office.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Commute Tracker needs your location to calculate travel times to your home and office.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Commute Tracker needs your location to calculate travel times to your home and office.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Commute Tracker needs your location to calculate travel times to your home and office.</string>
     <key>LSUIElement</key>
     <true/>
 </dict>

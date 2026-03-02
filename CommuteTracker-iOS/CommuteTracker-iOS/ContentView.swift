@@ -54,6 +54,19 @@ struct ContentView: View {
                     }
                 }
 
+                // Show location error message if any
+                if let errorMessage = locationManager.errorMessage {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                            .imageScale(.small)
+                        Text(errorMessage)
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
+                    .padding(.top, 2)
+                }
+
                 // Show current location for debugging
                 if let location = locationManager.location {
                     Text("📍 \(String(format: "%.4f, %.4f", location.coordinate.latitude, location.coordinate.longitude))")
