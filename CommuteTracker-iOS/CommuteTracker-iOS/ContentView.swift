@@ -4,9 +4,7 @@ import CoreLocation
 struct ContentView: View {
     @ObservedObject var locationManager: LocationManager
     @ObservedObject var commuteManager: CommuteManager
-    @AppStorage("homeAddress") private var homeAddress = "27 Howland Rd, West Newton, MA 02465"
-    @AppStorage("officeAddress") private var officeAddress = "300 A Street, Boston, MA 02210"
-    @AppStorage("googleMapsAPIKey") private var apiKey = ""
+    @ObservedObject var settings = SettingsManager.shared
     @State private var showSettings = false
 
     var body: some View {
@@ -98,7 +96,7 @@ struct ContentView: View {
                         transitDistance: commuteManager.homeTransitDistance
                     )
                     .onTapGesture {
-                        openGoogleMaps(destination: homeAddress, mode: "driving")
+                        openGoogleMaps(destination: settings.homeAddress, mode: "driving")
                     }
 
                     CommuteCard(
@@ -109,7 +107,7 @@ struct ContentView: View {
                         transitDistance: commuteManager.officeTransitDistance
                     )
                     .onTapGesture {
-                        openGoogleMaps(destination: officeAddress, mode: "driving")
+                        openGoogleMaps(destination: settings.officeAddress, mode: "driving")
                     }
                 }
                 .padding(.horizontal)
@@ -128,14 +126,14 @@ struct ContentView: View {
     var settingsView: some View {
         Form {
             Section(header: Text("Google Maps API Key")) {
-                TextField("API Key", text: $apiKey)
+                TextField("API Key", text: $settings.apiKey)
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
             }
 
             Section(header: Text("Addresses")) {
-                TextField("Home Address", text: $homeAddress)
-                TextField("Office Address", text: $officeAddress)
+                TextField("Home Address", text: $settings.homeAddress)
+                TextField("Office Address", text: $settings.officeAddress)
             }
 
             Section {
@@ -153,13 +151,13 @@ struct ContentView: View {
             locationManager.requestLocation()
 
             // Retry after a delay if still no location
-            DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) { [weak locationManager, weak commuteManager, homeAddress, officeAddress, apiKey] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) { [weak locationManager, weak commuteManager, settings] in
                 if let location = locationManager?.location {
                     commuteManager?.updateCommuteTimes(
                         from: location,
-                        homeAddress: homeAddress,
-                        officeAddress: officeAddress,
-                        apiKey: apiKey
+                        homeAddress: settings.homeAddress,
+                        officeAddress: settings.officeAddress,
+                        apiKey: settings.apiKey
                     )
                 } else {
                     commuteManager?.statusMessage = "Failed to get location"
@@ -175,9 +173,9 @@ struct ContentView: View {
 
         commuteManager.updateCommuteTimes(
             from: location,
-            homeAddress: homeAddress,
-            officeAddress: officeAddress,
-            apiKey: apiKey
+            homeAddress: settings.homeAddress,
+            officeAddress: settings.officeAddress,
+            apiKey: settings.apiKey
         )
     }
 

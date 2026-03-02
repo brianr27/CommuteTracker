@@ -4,9 +4,7 @@ import CoreLocation
 struct ContentView: View {
     @ObservedObject var locationManager: LocationManager
     @ObservedObject var commuteManager: CommuteManager
-    @AppStorage("homeAddress") private var homeAddress = "27 Howland Rd, West Newton, MA 02465"
-    @AppStorage("officeAddress") private var officeAddress = "300 A Street, Boston, MA 02210"
-    @AppStorage("googleMapsAPIKey") private var apiKey = ""
+    @ObservedObject var settings = SettingsManager.shared
     @State private var showSettings = false
 
     var body: some View {
@@ -102,7 +100,7 @@ struct ContentView: View {
                         transitDistance: commuteManager.homeTransitDistance
                     )
                     .onTapGesture {
-                        openGoogleMaps(destination: homeAddress, mode: "driving")
+                        openGoogleMaps(destination: settings.homeAddress, mode: "driving")
                     }
 
                     CommuteCard(
@@ -113,7 +111,7 @@ struct ContentView: View {
                         transitDistance: commuteManager.officeTransitDistance
                     )
                     .onTapGesture {
-                        openGoogleMaps(destination: officeAddress, mode: "driving")
+                        openGoogleMaps(destination: settings.officeAddress, mode: "driving")
                     }
                 }
                 .padding(.horizontal)
@@ -135,10 +133,19 @@ struct ContentView: View {
                 .font(.headline)
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Google Maps API Key")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                TextField("API Key", text: $apiKey)
+                HStack {
+                    Text("Google Maps API Key")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Spacer()
+                    Image(systemName: "lock.fill")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                    Text("Keychain")
+                        .font(.caption2)
+                        .foregroundColor(.green)
+                }
+                TextField("API Key", text: $settings.apiKey)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -146,7 +153,7 @@ struct ContentView: View {
                 Text("Home Address")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                TextField("Address", text: $homeAddress)
+                TextField("Address", text: $settings.homeAddress)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -154,7 +161,7 @@ struct ContentView: View {
                 Text("Office Address")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                TextField("Address", text: $officeAddress)
+                TextField("Address", text: $settings.officeAddress)
                     .textFieldStyle(.roundedBorder)
             }
 
@@ -182,9 +189,9 @@ struct ContentView: View {
                 if let location = locationManager.location {
                     commuteManager.updateCommuteTimes(
                         from: location,
-                        homeAddress: homeAddress,
-                        officeAddress: officeAddress,
-                        apiKey: apiKey
+                        homeAddress: settings.homeAddress,
+                        officeAddress: settings.officeAddress,
+                        apiKey: settings.apiKey
                     )
                 } else {
                     commuteManager.statusMessage = "Failed to get location"
@@ -200,9 +207,9 @@ struct ContentView: View {
 
         commuteManager.updateCommuteTimes(
             from: location,
-            homeAddress: homeAddress,
-            officeAddress: officeAddress,
-            apiKey: apiKey
+            homeAddress: settings.homeAddress,
+            officeAddress: settings.officeAddress,
+            apiKey: settings.apiKey
         )
     }
 
