@@ -6,6 +6,7 @@ struct ContentView: View {
     @ObservedObject var commuteManager: CommuteManager
     @ObservedObject var settings = SettingsManager.shared
     @State private var showSettings = false
+    @State private var hasRequestedInitialUpdate = false
 
     var body: some View {
         NavigationView {
@@ -26,8 +27,17 @@ struct ContentView: View {
                 }
             }
             .onAppear {
-                locationManager.requestLocation()
-                updateCommuteTimes()
+                // Request location on first launch
+                if !hasRequestedInitialUpdate {
+                    hasRequestedInitialUpdate = true
+                    locationManager.requestLocation()
+                }
+            }
+            .onChange(of: locationManager.location) { newLocation in
+                // Automatically update commute times when location changes
+                if newLocation != nil && !settings.apiKey.isEmpty {
+                    updateCommuteTimes()
+                }
             }
         }
     }
@@ -146,30 +156,29 @@ struct ContentView: View {
     }
 
     func updateCommuteTimes() {
-        if locationManager.location == nil && !locationManager.isUpdating {
-            commuteManager.statusMessage = "Getting location..."
-            locationManager.requestLocation()
+        // Check if we have API key and addresses configured
+        guard !settings.apiKey.isEmpty else {
+            commuteManager.statusMessage = "Configure API key in Settings"
+            return
+        }
 
-            // Retry after a delay if still no location
-            DispatchQueue.main.asyncAfter(deadline: .now() + 8.0) { [weak locationManager, weak commuteManager, settings] in
-                if let location = locationManager?.location {
-                    commuteManager?.updateCommuteTimes(
-                        from: location,
-                        homeAddress: settings.homeAddress,
-                        officeAddress: settings.officeAddress,
-                        apiKey: settings.apiKey
-                    )
-                } else {
-                    commuteManager?.statusMessage = "Failed to get location"
-                }
+        guard !settings.homeAddress.isEmpty || !settings.officeAddress.isEmpty else {
+            commuteManager.statusMessage = "Configure addresses in Settings"
+            return
+        }
+
+        // If no location yet, request it
+        if locationManager.location == nil {
+            if !locationManager.isUpdating {
+                commuteManager.statusMessage = "Getting location..."
+                locationManager.requestLocation()
             }
+            // The .onChange observer will trigger update when location arrives
             return
         }
 
-        guard let location = locationManager.location else {
-            commuteManager.statusMessage = "Getting location..."
-            return
-        }
+        // We have location, fetch commute times
+        guard let location = locationManager.location else { return }
 
         commuteManager.updateCommuteTimes(
             from: location,
