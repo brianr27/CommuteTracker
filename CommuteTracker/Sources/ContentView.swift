@@ -6,7 +6,7 @@ struct ContentView: View {
     @ObservedObject var commuteManager: CommuteManager
     @AppStorage("homeAddress") private var homeAddress = "27 Howland Rd, West Newton, MA 02465"
     @AppStorage("officeAddress") private var officeAddress = "300 A Street, Boston, MA 02210"
-    @AppStorage("googleMapsAPIKey") private var apiKey = "YOUR_API_KEY_HERE"
+    @AppStorage("googleMapsAPIKey") private var apiKey = ""
     @State private var showSettings = false
 
     var body: some View {

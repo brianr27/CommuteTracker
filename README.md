@@ -22,6 +22,14 @@ Click the car icon in your menu bar to see:
 - Real-time traffic conditions
 - Distance information
 
+## ⚠️ Security Warning
+
+**NEVER commit your Google Maps API key to git!**
+
+- The app stores your API key in UserDefaults after you enter it in Settings
+- Keep your API key private and secure
+- If you accidentally commit an API key, revoke it immediately in Google Cloud Console
+
 ## Installation
 
 ### Prerequisites
