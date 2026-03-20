@@ -27,8 +27,8 @@ struct CommuteTrackerApp: App {
                 }
             }
         }
-        .onChange(of: scenePhase) {
-            if scenePhase == .background {
+        .onChange(of: scenePhase) { newPhase in
+            if newPhase == .background {
                 // Schedule background refresh when app goes to background
                 if settings.alertsEnabled {
                     BackgroundTaskManager.shared.scheduleBackgroundRefresh()

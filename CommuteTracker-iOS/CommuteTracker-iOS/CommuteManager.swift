@@ -16,6 +16,9 @@ class CommuteManager: ObservableObject {
     @Published var statusMessage = "Ready"
     @Published var lastUpdate: Date?
 
+    private var hasAlertedForHome = false
+    private var hasAlertedForOffice = false
+
     func updateCommuteTimes(from location: CLLocation, homeAddress: String, officeAddress: String, apiKey: String) {
         statusMessage = "Calculating routes..."
 
@@ -26,6 +29,7 @@ class CommuteManager: ObservableObject {
             DispatchQueue.main.async {
                 self?.homeDrivingTime = result?.duration
                 self?.homeDrivingDistance = result?.distance
+                self?.checkAndAlert(destination: "Home", duration: result?.duration, distance: result?.distance, isHome: true)
             }
         }
 
@@ -40,6 +44,7 @@ class CommuteManager: ObservableObject {
             DispatchQueue.main.async {
                 self?.officeDrivingTime = result?.duration
                 self?.officeDrivingDistance = result?.distance
+                self?.checkAndAlert(destination: "Office", duration: result?.duration, distance: result?.distance, isHome: false)
             }
         }
 
@@ -133,6 +138,81 @@ class CommuteManager: ObservableObject {
 
             completion(CommuteResult(duration: duration, distance: distance))
         }.resume()
+    }
+
+    private func checkAndAlert(destination: String, duration: String?, distance: String?, isHome: Bool) {
+        let settings = SettingsManager.shared
+
+        // Check if alerts are enabled
+        guard settings.alertsEnabled else { return }
+
+        // Check if we should monitor this route
+        if isHome && !settings.monitorHomeRoute { return }
+        if !isHome && !settings.monitorOfficeRoute { return }
+
+        // Check if we've already alerted for this route
+        if isHome && hasAlertedForHome { return }
+        if !isHome && hasAlertedForOffice { return }
+
+        // Parse duration and check for delay
+        guard let duration = duration,
+              let currentMinutes = parseDurationToMinutes(duration) else { return }
+
+        // Get baseline time for this route
+        let baselineMinutes = isHome ? settings.baselineHomeDrivingMinutes : settings.baselineOfficeDrivingMinutes
+
+        // Skip if baseline not set
+        guard baselineMinutes > 0 else {
+            print("⚠️ No baseline set for \(destination)")
+            return
+        }
+
+        // Calculate delay
+        let delayMinutes = currentMinutes - baselineMinutes
+
+        if delayMinutes > settings.delayThresholdMinutes {
+            NotificationManager.shared.sendDelayAlert(
+                destination: destination,
+                currentDuration: duration,
+                delayMinutes: delayMinutes,
+                distance: distance ?? "Unknown distance"
+            )
+
+            // Mark as alerted to prevent repeated notifications
+            if isHome {
+                hasAlertedForHome = true
+            } else {
+                hasAlertedForOffice = true
+            }
+        }
+    }
+
+    private func parseDurationToMinutes(_ duration: String) -> Int? {
+        // Examples: "25 mins", "1 hour 5 mins", "35 mins"
+        let components = duration.lowercased().components(separatedBy: " ")
+
+        var totalMinutes = 0
+
+        for i in 0..<components.count {
+            let component = components[i]
+
+            if component.contains("hour") {
+                if i > 0, let hours = Int(components[i - 1]) {
+                    totalMinutes += hours * 60
+                }
+            } else if component.contains("min") {
+                if i > 0, let mins = Int(components[i - 1]) {
+                    totalMinutes += mins
+                }
+            }
+        }
+
+        return totalMinutes > 0 ? totalMinutes : nil
+    }
+
+    func resetAlerts() {
+        hasAlertedForHome = false
+        hasAlertedForOffice = false
     }
 }
 
