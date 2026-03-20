@@ -146,6 +146,52 @@ struct ContentView: View {
                 TextField("Office Address", text: $settings.officeAddress)
             }
 
+            Section(header: Text("Traffic Delay Alerts")) {
+                Toggle("Enable Delay Alerts", isOn: $settings.alertsEnabled)
+                    .onChange(of: settings.alertsEnabled) { enabled in
+                        if enabled {
+                            NotificationManager.shared.requestAuthorization()
+                        }
+                    }
+
+                if settings.alertsEnabled {
+                    Stepper("Alert on \(settings.delayThresholdMinutes)+ min delay", value: $settings.delayThresholdMinutes, in: 5...30, step: 5)
+
+                    Toggle("Monitor Home Route", isOn: $settings.monitorHomeRoute)
+                    if settings.monitorHomeRoute {
+                        Stepper("Baseline home: \(settings.baselineHomeDrivingMinutes) mins", value: $settings.baselineHomeDrivingMinutes, in: 0...120, step: 5)
+                        if let currentTime = commuteManager.homeDrivingTime,
+                           let mins = parseDurationToMinutes(currentTime) {
+                            Button("Set baseline to current (\(mins) mins)") {
+                                settings.baselineHomeDrivingMinutes = mins
+                            }
+                            .font(.caption)
+                        }
+                    }
+
+                    Toggle("Monitor Office Route", isOn: $settings.monitorOfficeRoute)
+                    if settings.monitorOfficeRoute {
+                        Stepper("Baseline office: \(settings.baselineOfficeDrivingMinutes) mins", value: $settings.baselineOfficeDrivingMinutes, in: 0...120, step: 5)
+                        if let currentTime = commuteManager.officeDrivingTime,
+                           let mins = parseDurationToMinutes(currentTime) {
+                            Button("Set baseline to current (\(mins) mins)") {
+                                settings.baselineOfficeDrivingMinutes = mins
+                            }
+                            .font(.caption)
+                        }
+                    }
+
+                    Text("The app will check your commute every 15 minutes in the background when alerts are enabled.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Button("Reset Alerts") {
+                        commuteManager.resetAlerts()
+                    }
+                    .foregroundColor(.orange)
+                }
+            }
+
             Section {
                 Button("Done") {
                     showSettings = false
@@ -201,6 +247,29 @@ struct ContentView: View {
         if let url = URL(string: urlString) {
             UIApplication.shared.open(url)
         }
+    }
+
+    func parseDurationToMinutes(_ duration: String) -> Int? {
+        // Examples: "25 mins", "1 hour 5 mins", "35 mins"
+        let components = duration.lowercased().components(separatedBy: " ")
+
+        var totalMinutes = 0
+
+        for i in 0..<components.count {
+            let component = components[i]
+
+            if component.contains("hour") {
+                if i > 0, let hours = Int(components[i - 1]) {
+                    totalMinutes += hours * 60
+                }
+            } else if component.contains("min") {
+                if i > 0, let mins = Int(components[i - 1]) {
+                    totalMinutes += mins
+                }
+            }
+        }
+
+        return totalMinutes > 0 ? totalMinutes : nil
     }
 }
 
